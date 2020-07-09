@@ -8,7 +8,7 @@
     android:paddingBottom="16dp">
 
     <EditText
-        android:id="@+id/etNoteDescription"
+        android:id="@+id/etTaskDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/edit_task_description"
@@ -71,6 +71,7 @@
         </LinearLayout>
 
         <RadioGroup
+            android:id="@+id/radioGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -82,7 +83,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="onPrioritySelected"
                 android:theme="@style/WhiteRadioButton" />
 
             <RadioButton
@@ -90,7 +90,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="onPrioritySelected"
                 android:theme="@style/WhiteRadioButton" />
 
             <RadioButton
@@ -98,7 +97,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:onClick="onPrioritySelected"
                 android:theme="@style/WhiteRadioButton" />
 
 
