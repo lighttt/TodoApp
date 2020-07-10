@@ -23,4 +23,7 @@ public interface TaskDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void updateTask(TaskEntry taskEntry);
+
+    @Query("SELECT * FROM task WHERE id = :id")
+    TaskEntry loadTaskById(int id);
 }

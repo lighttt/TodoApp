@@ -101,6 +101,23 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
     }
 
+    /**
+     * Get the list of the tasks
+     */
+    public List<TaskEntry> getTasks()
+    {
+        return mTaskEntries;
+    }
+
+
+    /**
+     * Set list of tasks from Room database
+     */
+    public void setTasks(List<TaskEntry> taskEntries){
+        mTaskEntries = taskEntries;
+        notifyDataSetChanged();
+    }
+
     public class TaskViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         TextView taskDescriptionView;
@@ -117,7 +134,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         @Override
         public void onClick(View view) {
-
+            int elementId = mTaskEntries.get(getAdapterPosition()).getId();
+            mItemClickListner.onItemClickListener(elementId);
         }
     }
 }

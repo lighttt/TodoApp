@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -43,7 +41,6 @@
                 android:layout_weight="1"
                 android:background="@color/materialRed"
                 android:text="High"
-                android:onClick="onPrioritySelected"
                 android:textColor="@android:color/primary_text_light" />
 
             <Button
@@ -54,7 +51,6 @@
                 android:layout_weight="1"
                 android:background="@color/materialOrange"
                 android:text="Medium"
-                android:onClick="onPrioritySelected"
                 android:textColor="@android:color/primary_text_light" />
 
             <Button
@@ -65,7 +61,6 @@
                 android:layout_weight="1"
                 android:background="@color/materialYellow"
                 android:text="Low"
-                android:onClick="onPrioritySelected"
                 android:textColor="@android:color/primary_text_light" />
 
         </LinearLayout>
@@ -112,7 +107,6 @@
         android:layout_gravity="center"
         android:background="@color/colorPrimary"
         android:text="Add"
-        android:onClick="onClickAddNote"
         android:textColor="@android:color/primary_text_dark" />
 
 </LinearLayout>

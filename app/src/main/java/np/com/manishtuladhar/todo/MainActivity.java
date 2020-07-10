@@ -11,12 +11,19 @@ import android.view.View;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.List;
+
+import np.com.manishtuladhar.todo.database.AppDatabase;
+import np.com.manishtuladhar.todo.database.TaskEntry;
+
 public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemClickListener {
 
     private static final String TAG = "MainActivity";
 
     private RecyclerView mRecyclerView;
     private TaskAdapter mAdapter;
+
+    private AppDatabase mDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +44,17 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
             }
 
             @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+            public void onSwiped(final RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        int position = viewHolder.getAdapterPosition();
+                        List<TaskEntry> taskEntryList = mAdapter.getTasks();
+                        mDB.taskDao().deleteTask(taskEntryList.get(position));
+                        retrieveTasks();
+                    }
+                });
+
             }
         }).attachToRecyclerView(mRecyclerView);
 
@@ -49,10 +66,42 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                 startActivity(addTaskIntent);
             }
         });
+        //initialize
+        mDB = AppDatabase.getsInstance(getApplicationContext());
+    }
+
+
+    /**
+     * After we add data from addtaskactivity, we come back to mainactivity:
+     * onResume is called so we query new data here
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+       retrieveTasks();
+    }
+
+    private void retrieveTasks()
+    {
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                final List<TaskEntry> tasks = mDB.taskDao().loadAllTasks();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mAdapter.setTasks(tasks);
+                    }
+                });
+            }
+        });
     }
 
     @Override
     public void onItemClickListener(int itemId) {
-
+        //while updating tasks
+        Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
+        intent.putExtra(AddTaskActivity.EXTRA_TASK_ID,itemId);
+        startActivity(intent);
     }
 }

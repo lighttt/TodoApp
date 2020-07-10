@@ -1,8 +1,11 @@
 package np.com.manishtuladhar.todo;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,6 +20,14 @@ public class AddTaskActivity extends AppCompatActivity {
 
     private static final String TAG = "AddTaskActivity";
 
+    //intents
+    public static final String EXTRA_TASK_ID = "extraTaskId";
+    private static final int DEFAULT_TASK_ID = -1;
+    private int mTaskId = DEFAULT_TASK_ID;
+
+    //save instance
+    private static final String INSTANCE_TASK_ID = "instanceTaskId";
+
     //variable and views
     public static final int PRIORITY_HIGH = 1;
     public static final int PRIORITY_MEDIUM = 2;
@@ -29,7 +40,6 @@ public class AddTaskActivity extends AppCompatActivity {
     private AppDatabase mDB;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +47,6 @@ public class AddTaskActivity extends AppCompatActivity {
         mEditText = findViewById(R.id.etTaskDescription);
         mRadioGroup = findViewById(R.id.radioGroup);
         mButton = findViewById(R.id.addButton);
-
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -46,23 +55,84 @@ public class AddTaskActivity extends AppCompatActivity {
         });
 
         mDB = AppDatabase.getsInstance(getApplicationContext());
+
+        //save instance
+        if(savedInstanceState!=null && savedInstanceState.containsKey(INSTANCE_TASK_ID))
+        {
+            mTaskId = savedInstanceState.getInt(INSTANCE_TASK_ID,DEFAULT_TASK_ID);
+        }
+
+        //intents
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra(EXTRA_TASK_ID)) {
+            mButton.setText(R.string.update);
+            if (mTaskId == DEFAULT_TASK_ID) {
+                mTaskId = intent.getIntExtra(EXTRA_TASK_ID, DEFAULT_TASK_ID);
+
+                //single task lina lai
+                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        final TaskEntry task = mDB.taskDao().loadTaskById(mTaskId);
+                        runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        populateUI(task);
+                                    }
+                                }
+                        );
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Handling saving state of the app
+      */
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putInt(INSTANCE_TASK_ID,mTaskId);
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Populating our UI with data if it is from update
+     */
+    void populateUI(TaskEntry task) {
+        if (task == null) {
+            return;
+        }
+        //set
+        mEditText.setText(task.getDescription());
+        setPriorityInViews(task.getPriority());
     }
 
 
     /**
      * Adding new task to the list
      */
-    public void onSaveButtonClicked(){
+    public void onSaveButtonClicked() {
         String description = mEditText.getText().toString();
         int priority = getPriorityFromViews();
         Date date = new Date();
 
         //adding new object
-        TaskEntry taskEntry = new TaskEntry(description,priority,date);
-        mDB.taskDao().insertTask(taskEntry);
-
-        //close activity
-        finish();
+        final TaskEntry taskEntry = new TaskEntry(description, priority, date);
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                if (mTaskId == DEFAULT_TASK_ID) {
+                    mDB.taskDao().insertTask(taskEntry);
+                } else {
+                    taskEntry.setId(mTaskId);
+                    mDB.taskDao().updateTask(taskEntry);
+                }
+                //close activity
+                finish();
+            }
+        });
     }
 
     /**
