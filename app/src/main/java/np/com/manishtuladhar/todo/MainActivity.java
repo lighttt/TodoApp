@@ -1,12 +1,16 @@
 package np.com.manishtuladhar.todo;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -51,7 +55,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                         int position = viewHolder.getAdapterPosition();
                         List<TaskEntry> taskEntryList = mAdapter.getTasks();
                         mDB.taskDao().deleteTask(taskEntryList.get(position));
-                        retrieveTasks();
                     }
                 });
 
@@ -68,31 +71,25 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
         });
         //initialize
         mDB = AppDatabase.getsInstance(getApplicationContext());
+
+        //retrieving here instead of resume method
+        setupViewModel();
     }
 
+    private void setupViewModel() {
 
-    /**
-     * After we add data from addtaskactivity, we come back to mainactivity:
-     * onResume is called so we query new data here
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-       retrieveTasks();
-    }
+        //declare and initialize view model for loading tasks
+        MainViewModel viewModel =  new ViewModelProvider(this,
+                ViewModelProvider.AndroidViewModelFactory
+                        .getInstance(this.getApplication()))
+                .get(MainViewModel.class);
 
-    private void retrieveTasks()
-    {
-        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+        //observe : tasks observe and runonuithread adapter set tasks
+        viewModel.getTasks().observe(this, new Observer<List<TaskEntry>>() {
             @Override
-            public void run() {
-                final List<TaskEntry> tasks = mDB.taskDao().loadAllTasks();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.setTasks(tasks);
-                    }
-                });
+            public void onChanged(List<TaskEntry> taskEntries) {
+                Log.d(TAG, "onChanged: Recieved tasks from the database");
+                mAdapter.setTasks(taskEntries);
             }
         });
     }
@@ -101,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
     public void onItemClickListener(int itemId) {
         //while updating tasks
         Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
-        intent.putExtra(AddTaskActivity.EXTRA_TASK_ID,itemId);
+        intent.putExtra(AddTaskActivity.EXTRA_TASK_ID, itemId);
         startActivity(intent);
     }
 }

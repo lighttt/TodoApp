@@ -2,6 +2,8 @@ package np.com.manishtuladhar.todo;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -70,18 +72,15 @@ public class AddTaskActivity extends AppCompatActivity {
                 mTaskId = intent.getIntExtra(EXTRA_TASK_ID, DEFAULT_TASK_ID);
 
                 //single task lina lai
-                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                //live data for a single task entry
+                final LiveData<TaskEntry> task = mDB.taskDao().loadTaskById(mTaskId);
+                //observe the data for change and update the ui
+                task.observe(this, new Observer<TaskEntry>() {
                     @Override
-                    public void run() {
-                        final TaskEntry task = mDB.taskDao().loadTaskById(mTaskId);
-                        runOnUiThread(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        populateUI(task);
-                                    }
-                                }
-                        );
+                    public void onChanged(TaskEntry taskEntry) {
+                        //remove the observer since we dont need it after we update
+                        task.removeObserver(this);
+                        populateUI(taskEntry);
                     }
                 });
             }
